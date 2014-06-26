@@ -10,4 +10,5 @@
   
   :plugins [[lein-ring "0.8.10"]]
 
-  :ring {:handler wikj.core/app})
+  :ring {:init wikj.core/bootstrap!
+         :handler wikj.core/app})
