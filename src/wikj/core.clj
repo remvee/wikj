@@ -1,10 +1,11 @@
 (ns wikj.core
   (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [hiccup.page :refer [html5 include-css]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.middleware.defaults :refer [site-defaults
                                               wrap-defaults]]
-            [wikj.formatting :refer [wiki->html]])
+            [wikj.formatting :refer [wiki->html decamelize]])
   (:import (java.io FileInputStream FileOutputStream PushbackReader)))
 
 
@@ -12,7 +13,7 @@
 ;; Views
 
 (defn titlize [path]
-  (subs path 1))
+  (str/capitalize (decamelize (subs path 1))))
 
 (defn layout [title & body]
   (html5
@@ -55,7 +56,7 @@
       (binding [*in* in] (read)))
     (catch Exception e nil)))
 
-(def pages (atom {}))
+(defonce pages (atom {}))
 
 (defn restore-pages []
   (reset! pages (or (restore backup-file) {})))
