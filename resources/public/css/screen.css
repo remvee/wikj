@@ -1,0 +1,24 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  max-width: 50em;
+  margin: 5em auto;
+}
+
+div.content {
+  margin: 1em 0
+}
+
+form.edit-page {}
+
+  form.edit-page textarea {
+    width: 100%;
+    min-height: 20em;
+  }
+  form.edit-page button {
+    padding: .5em 1em;
+    float: right;
+    maring: 0;
+  }
