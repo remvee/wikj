@@ -11,6 +11,16 @@ div.content {
   margin: 1em 0
 }
 
+ol.versions {
+  padding: 0;
+  margin: 0 0 0 .5em;
+  display: inline-block;
+}
+  ol.versions li {
+    display: inline-block;
+    margin-right: .5em;
+  }
+
 form.edit-page {}
 
   form.edit-page textarea {

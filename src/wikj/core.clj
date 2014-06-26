@@ -24,10 +24,14 @@
     [:h1 title]
     body]))
 
-(defn existing-page [path data]
+(defn existing-page [path data versions]
   (layout (titlize path)
           [:div.content (wiki->html data)]
-          [:a {:href "?edit=1"} "@"]))
+          [:div.actions
+           [:a {:href "?edit=1"} "@"]
+           [:ol.versions
+            (map #(vec [:li [:a {:href (str "?version=" %)} %]])
+                 (reverse (take versions (iterate inc 0))))]]))
 
 (defn edit-page [path data]
   (layout (titlize path)
@@ -66,31 +70,40 @@
          update-in [path] #(conj (or %1 []) %2) data)
   (backup! @pages backup-file))
 
-(defn page-get [path]
-  (last (@pages path)))
+(defn page-get-versions [path]
+  (@pages path))
 
+(defn page-get [path & version]
+  (let [version (and (first version) (Integer. (first version)))]
+    (if version
+      (nth (page-get-versions path) version)
+      (last (page-get-versions path)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Actions
 
-(defn edit [path]
+(defn ok-html [body]  
   {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body (edit-page path (page-get path))})
+   :headers {"Content-Type" "text/html; charset=utf-8"}
+   :body body})
 
-(defn show [path]
-  (let [data (page-get path)
-        html (if data
-               (existing-page path data)
+(defn redirect-to [url]
+  {:status 302
+   :headers {"Location" url}})
+
+(defn edit [path]
+  (ok-html (edit-page path (page-get path))))
+
+(defn show [path version]
+  (let [data (page-get path version)
+        body (if data
+               (existing-page path data (count (page-get-versions path)))
                (edit-page path data))]
-    {:status 200
-     :headers {"Content-Type" "text/html"}
-     :body html}))
+    (ok-html body)))
 
 (defn create [path data]
   (page-add path data)
-  {:status 302
-   :headers {"Location" path}})
+  (redirect-to path))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -100,14 +113,13 @@
   (case (:request-method req)
     :get (cond
           (= "/" (:uri req))
-          {:status 302
-           :headers {"Location" "/HomePage"}}
+          (redirect-to "/HomePage")
           
           (:edit (:params req))
           (edit (:uri req))
 
           :else
-          (show (:uri req)))
+          (show (:uri req) (:version (:params req))))
     
     :post (create (:uri req) (:data (:params req)))))
 
