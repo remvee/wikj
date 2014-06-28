@@ -1,6 +1,7 @@
 (ns wikj.core
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [hiccup.page :refer [html5 include-css]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.middleware.defaults :refer [site-defaults
@@ -125,5 +126,17 @@
 (defn bootstrap! []
   (restore-pages))
 
+(defn wrap-exception
+  [app]
+  (fn [req]
+    (try (app req)
+         (catch Throwable t
+           (log/error t (.getMessage t))
+           {:status 500
+            :headers {"Content-Type" "text/plain"}
+            :body "auch.."}))))
+
 (def app
-  (wrap-defaults handler site-defaults))
+  (-> handler
+      (wrap-defaults site-defaults)
+      wrap-exception))
