@@ -25,26 +25,28 @@
     [:h1 title]
     body]))
 
-(defn existing-page [path data versions]
-  (layout (titlize path)
-          [:div.content (wiki->html data)]
-          [:div.actions
-           [:a {:href "?edit=1"} "@"]
-           [:ol.versions
-            (map #(vec [:li [:a {:href (str "?version=" %)} %]])
-                 (reverse (take versions (iterate inc 0))))]]))
+(defn render-show [path data versions]
+  (layout
+   (titlize path)
+   [:div.content (wiki->html data)]
+   [:div.actions
+    [:a {:href "?edit=1"} "@"]
+    [:ol.versions
+     (map #(vec [:li [:a {:href (str "?version=" %)} %]])
+          (reverse (take versions (iterate inc 0))))]]))
 
-(defn edit-page [path data]
-  (layout (titlize path)
-          [:div.content (wiki->html data)]
-          [:form.edit-page {:method "post"}
-           [:input {:type "hidden" :name "__anti-forgery-token" :value *anti-forgery-token*}]
-           [:textarea {:name "data"} data]
-           [:button {:type "submit"} "@"]]))
+(defn render-edit [path data]
+  (layout
+   (titlize path)
+   [:div.content (wiki->html data)]
+   [:form.edit-page {:method "post"}
+    [:input {:type "hidden" :name "__anti-forgery-token" :value *anti-forgery-token*}]
+    [:textarea {:name "data"} data]
+    [:button {:type "submit"} "@"]]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Data
+;; State
 
 (def backup-file "/tmp/wikj.sexp")
 
@@ -65,22 +67,21 @@
 (defn restore-pages []
   (reset! pages (or (restore backup-file) {})))
 
-(defn page-add [path data]
+(defn push-page [path data]
   (swap! pages
          update-in [path] #(conj (or %1 []) %2) data)
   (backup! @pages backup-file))
 
-(defn page-get-versions [path]
+(defn get-page-versions [path]
   (@pages path))
 
-(defn page-get [path & version]
-  (let [version (and (first version) (Integer. (first version)))]
-    (if version
-      (nth (page-get-versions path) version)
-      (last (page-get-versions path)))))
+(defn get-page
+  ([path] (last (get-page-versions path)))
+  ([path version] (nth (get-page-versions path) version)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Actions
+;; Handlers
 
 (defn ok-html [body]
   {:status 200
@@ -91,37 +92,35 @@
   {:status 302
    :headers {"Location" url}})
 
-(defn edit [path]
-  (ok-html (edit-page path (page-get path))))
+(defn handle-edit [path]
+  (ok-html
+   (render-edit path (get-page path))))
 
-(defn show [path version]
-  (let [data (page-get path version)
-        body (if data
-               (existing-page path data (count (page-get-versions path)))
-               (edit-page path data))]
-    (ok-html body)))
+(defn handle-show [path version]
+  (let [data (if version
+               (get-page path (Integer. version))
+               (get-page path))]
+    (ok-html
+     (if data
+       (render-show path data (count (get-page-versions path)))
+       (render-edit path data)))))
 
-(defn create [path data]
-  (page-add path data)
+(defn handle-create [path data]
+  (push-page path data)
   (redirect-to path))
+
+(defn handler [req]
+  (let [{:keys [request-method uri params]} req]
+    (case request-method
+      :get (cond
+            (= "/" uri)    (redirect-to "/HomePage")
+            (:edit params) (handle-edit uri)
+            :else          (handle-show uri (:version params)))
+      :post (handle-create uri (:data params)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Wirering
-
-(defn handler [req]
-  (case (:request-method req)
-    :get (cond
-          (= "/" (:uri req))
-          (redirect-to "/HomePage")
-
-          (:edit (:params req))
-          (edit (:uri req))
-
-          :else
-          (show (:uri req) (:version (:params req))))
-
-    :post (create (:uri req) (:data (:params req)))))
+;; Wiring
 
 (defn bootstrap! []
   (restore-pages))
