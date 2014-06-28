@@ -5,7 +5,7 @@
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.middleware.defaults :refer [site-defaults
                                               wrap-defaults]]
-            [wikj.formatting :refer [wiki->html decamelize]])
+            [wikj.formatting :refer [url-decode wiki->html]])
   (:import (java.io FileInputStream FileOutputStream PushbackReader)))
 
 
@@ -13,7 +13,7 @@
 ;; Views
 
 (defn titlize [path]
-  (str/capitalize (decamelize (subs path 1))))
+  (str/capitalize (url-decode (subs path 1))))
 
 (defn layout [title & body]
   (html5
@@ -55,8 +55,7 @@
 
 (defn restore [file]
   (try
-    (with-open [in (PushbackReader.
-                   (io/reader (FileInputStream. file)))]
+    (with-open [in (PushbackReader. (io/reader (FileInputStream. file)))]
       (binding [*in* in] (read)))
     (catch Exception e nil)))
 
@@ -82,7 +81,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Actions
 
-(defn ok-html [body]  
+(defn ok-html [body]
   {:status 200
    :headers {"Content-Type" "text/html; charset=utf-8"}
    :body body})
@@ -114,13 +113,13 @@
     :get (cond
           (= "/" (:uri req))
           (redirect-to "/HomePage")
-          
+
           (:edit (:params req))
           (edit (:uri req))
 
           :else
           (show (:uri req) (:version (:params req))))
-    
+
     :post (create (:uri req) (:data (:params req)))))
 
 (defn bootstrap! []
