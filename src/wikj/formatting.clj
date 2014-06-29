@@ -1,7 +1,9 @@
 (ns wikj.formatting
   (:refer-clojure :exclude [replace])
   (:require [clojure.string :as str]
-            [hiccup.util :refer [escape-html]]))
+            [hiccup.util :refer [escape-html]])
+  (:import [java.text SimpleDateFormat]
+           [java.util Date]))
 
 (def ^:dynamic *encoding* "UTF-8")
 
@@ -41,3 +43,15 @@
     (-> (escape-html data)
         wiki->html-newlines
         wiki->html-links)))
+
+(defmulti htmlize "HTMLize value" class)
+
+(defmethod htmlize Date
+  [val]
+  (escape-html
+   (. (SimpleDateFormat. "YYYY/MM/dd @ HH:mm")
+      (format val))))
+
+(defmethod htmlize :default
+  [val]
+  (escape-html (str val)))

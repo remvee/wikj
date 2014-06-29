@@ -11,6 +11,19 @@ div.content {
   margin: 1em 0
 }
 
+div.meta:after {
+  content: ".";
+  display: block;
+  clear: right;
+  visibility: hidden;
+  height: 0;
+  line-height: 0;
+}
+  div.meta div.tstamp {
+    font-size: .5em;
+    float: right;
+  }
+
 ol.versions {
   padding: 0;
   margin: 0 0 0 .5em;

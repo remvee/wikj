@@ -6,8 +6,9 @@
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.middleware.defaults :refer [site-defaults
                                               wrap-defaults]]
-            [wikj.formatting :refer [url-decode wiki->html]])
-  (:import (java.io FileInputStream FileOutputStream PushbackReader)))
+            [wikj.formatting :refer [htmlize url-decode wiki->html]])
+  (:import [java.io FileInputStream FileOutputStream PushbackReader]
+           [java.util Date]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -25,17 +26,19 @@
     [:h1 title]
     body]))
 
-(defn render-show [path data versions]
+(defn render-show [path {:keys [data tstamp]} versions]
   (layout
    (titlize path)
    [:div.content (wiki->html data)]
+   [:div.meta
+    [:div.tstamp (htmlize tstamp)]]
    [:div.actions
     [:a {:href "?edit=1"} "@"]
     [:ol.versions
      (map #(vec [:li [:a {:href (str "?version=" %)} %]])
           (reverse (take versions (iterate inc 0))))]]))
 
-(defn render-edit [path data]
+(defn render-edit [path {:keys [data tstamp]}]
   (layout
    (titlize path)
    [:div.content (wiki->html data)]
@@ -69,7 +72,9 @@
 
 (defn push-page [path data]
   (swap! pages
-         update-in [path] #(conj (or %1 []) %2) data)
+         update-in [path]
+         #(conj (or %1 []) {:tstamp %2, :data %3})
+         (Date.) data)
   (backup! @pages backup-file))
 
 (defn get-page-versions [path]
@@ -97,13 +102,13 @@
    (render-edit path (get-page path))))
 
 (defn handle-show [path version]
-  (let [data (if version
+  (let [page (if version
                (get-page path (Integer. version))
                (get-page path))]
     (ok-html
-     (if data
-       (render-show path data (count (get-page-versions path)))
-       (render-edit path data)))))
+     (if page
+       (render-show path page (count (get-page-versions path)))
+       (render-edit path page)))))
 
 (defn handle-create [path data]
   (push-page path data)
