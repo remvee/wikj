@@ -1,13 +1,12 @@
 (ns wikj.core
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [hiccup.page :refer [html5 include-css]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.middleware.defaults :refer [site-defaults
                                               wrap-defaults]]
             [wikj.formatting :refer [htmlize url-decode wiki->html]])
-  (:import [java.io FileInputStream FileOutputStream PushbackReader]
+  (:import [java.io FileNotFoundException]
            [java.util Date]))
 
 
@@ -49,43 +48,6 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; State
-
-(def backup-file "/tmp/wikj.sexp")
-
-(defn backup! [data file]
-  (-> (Thread.
-       #(with-open [out (io/writer (FileOutputStream. file))]
-          (binding [*out* out] (pr data))))
-      .start))
-
-(defn restore [file]
-  (try
-    (with-open [in (PushbackReader. (io/reader (FileInputStream. file)))]
-      (binding [*in* in] (read)))
-    (catch Exception e nil)))
-
-(defonce pages (atom {}))
-
-(defn restore-pages []
-  (reset! pages (or (restore backup-file) {})))
-
-(defn push-page [path data]
-  (swap! pages
-         update-in [path]
-         #(conj (or %1 []) {:tstamp %2, :data %3})
-         (Date.) data)
-  (backup! @pages backup-file))
-
-(defn get-page-versions [path]
-  (@pages path))
-
-(defn get-page
-  ([path] (last (get-page-versions path)))
-  ([path version] (nth (get-page-versions path) version)))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handlers
 
 (defn ok-html [body]
@@ -97,38 +59,38 @@
   {:status 302
    :headers {"Location" url}})
 
-(defn handle-edit [path]
+(defn handle-edit [pages uri]
   (ok-html
-   (render-edit path (get-page path))))
+   (render-edit uri (last (get pages uri)))))
 
-(defn handle-show [path version]
-  (let [page (if version
-               (get-page path (Integer. version))
-               (get-page path))]
+(defn handle-show [pages uri version]
+  (let [versions (get pages uri)
+        page (if version
+               (nth versions (Integer. version))
+               (last versions))]
     (ok-html
      (if page
-       (render-show path page (count (get-page-versions path)))
-       (render-edit path page)))))
+       (render-show uri page (count versions))
+       (render-edit uri page)))))
 
-(defn handle-create [path data]
-  (push-page path data)
-  (redirect-to path))
+(defn handle-create [pages uri data]
+  (assoc (redirect-to uri)
+    :pages (update-in pages [uri]
+                      #(conj (or %1 []) {:tstamp %2, :data %3})
+                      (Date.) data)))
 
 (defn handler [req]
-  (let [{:keys [request-method uri params]} req]
+  (let [{:keys [request-method uri params pages]} req]
     (case request-method
       :get (cond
             (= "/" uri)    (redirect-to "/HomePage")
-            (:edit params) (handle-edit uri)
-            :else          (handle-show uri (:version params)))
-      :post (handle-create uri (:data params)))))
+            (:edit params) (handle-edit pages uri)
+            :else          (handle-show pages uri (:version params)))
+      :post (handle-create pages uri (:data params)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Wiring
-
-(defn bootstrap! []
-  (restore-pages))
 
 (defn wrap-exception
   [app]
@@ -140,7 +102,23 @@
             :headers {"Content-Type" "text/plain"}
             :body "auch.."}))))
 
+(defn wrap-pages
+  [app & [file]]
+  (letfn [(backup! [data]
+            (when file (future (spit file (pr-str data)))))
+          (restore []
+            (when file (try (read-string (slurp file))
+                            (catch FileNotFoundException _ nil))))]
+    (let [pages (atom (restore))]
+      (fn [req]
+        (let [res (app (assoc req :pages @pages))]
+          (when-let [updated-pages (:pages res)]
+            (reset! pages updated-pages)
+            (backup! @pages))
+          res)))))
+
 (def app
   (-> handler
+      (wrap-pages "/tmp/wikj.sexp")
       (wrap-defaults site-defaults)
       wrap-exception))

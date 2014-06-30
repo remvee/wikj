@@ -9,9 +9,6 @@
   (when @server-instance
     (throw (Exception. "already started")))
 
-  (when (not (seq @wikj/pages))
-    (wikj/restore-pages))
-
   (reset! server-instance
           (run-jetty #'wikj/app {:host (or host "localhost")
                                  :port (or port 8080)
