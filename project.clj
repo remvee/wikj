@@ -1,10 +1,10 @@
 (defproject wikj "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+  :description "A tiny wiki"
   :url "http://example.com/FIXME"
 
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/tools.logging "0.3.0"]
-                 [compojure "1.1.6"]
+                 [environ "0.5.0"]
                  [hiccup "1.0.5"]
                  [ring/ring-defaults "0.1.0"]
                  [ring-server "0.3.1"]]

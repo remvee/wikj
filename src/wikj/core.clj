@@ -1,6 +1,7 @@
 (ns wikj.core
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [environ.core :refer [env]]
             [hiccup.page :refer [html5 include-css]]
             [ring.middleware.defaults :refer [wrap-defaults]]
             [wikj.formatting :refer [htmlize url-decode wiki->html]])
@@ -124,6 +125,6 @@
 
 (def app
   (-> handler
-      (wrap-pages "/tmp/wikj.sexp")
+      (wrap-pages (env :wikj-backup-file))
       (wrap-defaults site-defaults)
       wrap-exception))
