@@ -33,8 +33,11 @@
    [:div.actions
     [:a {:href "?edit=1"} "@"]
     [:ol.versions
-     (map #(vec [:li [:a {:href (str "?version=" %)} %]])
-          (reverse (take versions (iterate inc 0))))]]))
+     (reverse (map #(vec [:li
+                          [:a {:href (str "?version=" %2)
+                               :title (htmlize (:tstamp %1))}
+                           %2]])
+                   versions (iterate inc 0)))]]))
 
 (defn render-edit [path {:keys [data tstamp]}]
   (layout
@@ -68,7 +71,7 @@
                (last versions))]
     (ok-html
      (if page
-       (render-show uri page (count versions))
+       (render-show uri page versions)
        (render-edit uri page)))))
 
 (defn handle-create [pages uri data]

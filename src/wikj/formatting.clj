@@ -49,7 +49,7 @@
 (defmethod htmlize Date
   [val]
   (escape-html
-   (. (SimpleDateFormat. "YYYY/MM/dd @ HH:mm")
+   (. (SimpleDateFormat. "YYYY/MM/dd @ HH:mm:ss")
       (format val))))
 
 (defmethod htmlize :default
