@@ -2,9 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [hiccup.page :refer [html5 include-css]]
-            [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
-            [ring.middleware.defaults :refer [site-defaults
-                                              wrap-defaults]]
+            [ring.middleware.defaults :refer [wrap-defaults]]
             [wikj.formatting :refer [htmlize url-decode wiki->html]])
   (:import [java.io FileNotFoundException]
            [java.util Date]))
@@ -42,7 +40,6 @@
    (titlize path)
    [:div.content (wiki->html data)]
    [:form.edit-page {:method "post"}
-    [:input {:type "hidden" :name "__anti-forgery-token" :value *anti-forgery-token*}]
     [:textarea {:name "data"} data]
     [:button {:type "submit"} "@"]]))
 
@@ -116,6 +113,14 @@
             (reset! pages updated-pages)
             (backup! @pages))
           res)))))
+
+(def site-defaults
+  {:params    {:keywordize true
+               :urlencoded true}
+   :responses {:absolute-redirects     true
+               :content-types          true
+               :not-modified-responses true}
+   :static    {:resources "public"}})
 
 (def app
   (-> handler
