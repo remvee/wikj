@@ -56,8 +56,12 @@
    :headers {"Content-Type" "text/html; charset=utf-8"}
    :body body})
 
-(defn redirect-to [url]
+(defn found [url]
   {:status 302
+   :headers {"Location" url}})
+
+(defn see-other [url]
+  {:status 303
    :headers {"Location" url}})
 
 (defn handle-edit [pages uri]
@@ -69,13 +73,12 @@
         page (if version
                (nth versions (Integer. version))
                (last versions))]
-    (ok-html
-     (if page
-       (render-show uri page versions)
-       (render-edit uri page)))))
+    (if page
+      (ok-html (render-show uri page versions))
+      (see-other (str uri "?edit=1")))))
 
 (defn handle-create [pages uri data]
-  (assoc (redirect-to uri)
+  (assoc (see-other uri)
     :pages (update-in pages [uri]
                       #(conj (or %1 []) {:tstamp %2, :data %3})
                       (Date.) data)))
@@ -84,7 +87,7 @@
   (let [{:keys [request-method uri params pages]} req]
     (case request-method
       :get (cond
-            (= "/" uri)    (redirect-to "/HomePage")
+            (= "/" uri)    (found "/HomePage")
             (:edit params) (handle-edit pages uri)
             :else          (handle-show pages uri (:version params)))
       :post (handle-create pages uri (:data params)))))

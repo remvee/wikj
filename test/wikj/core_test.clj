@@ -18,10 +18,10 @@
       (is (= "/HomePage" location))))
 
   (testing "new page route"
-    (let [{:keys [status body]}
+    (let [{status :status {location "Location"} :headers}
           (handler (request :get "/new+page"))]
-      (is (= status 200))
-      (is (re-seq #"<form [^>]*edit-page" body))))
+      (is (= status 303))
+      (is (= "/new+page?edit=1" location))))
 
   (let [path "/existing+page"
         page {:tstamp (Date.), :data "test content"}]
@@ -43,7 +43,7 @@
     (let [path "/new+page", data "test content"
           {status :status {location "Location"} :headers pages :pages}
           (handler (request :post path {:data data}))]
-      (is (= 302 status))
+      (is (= 303 status))
       (is (= path location))
       (is (not (nil? pages)))
       (is (= data (:data (last (get pages path))))))))
