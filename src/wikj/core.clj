@@ -24,7 +24,7 @@
     [:h1 title]
     body]))
 
-(defn render-show [path {:keys [data tstamp]} versions]
+(defn render-show [path {:keys [data tstamp] :as page} versions]
   (layout
    (titlize path)
    [:div.content (wiki->html data)]
@@ -33,10 +33,13 @@
    [:div.actions
     [:a {:href "?edit=1"} "@"]
     [:ol.versions
-     (reverse (map #(vec [:li
-                          [:a {:href (str "?version=" %2)
-                               :title (htmlize (:tstamp %1))}
-                           %2]])
+     (reverse (map (fn [p i]
+                     [:li
+                      [:a (conj
+                           {:title (htmlize (:tstamp p))}
+                           (if-not (= page p)
+                             {:href (str "?version=" i)}))
+                       i]])
                    versions (iterate inc 0)))]]))
 
 (defn render-edit [path {:keys [data tstamp]}]
