@@ -11,8 +11,7 @@
 
   :plugins [[lein-ring "0.8.10"]]
 
-  :ring {:init wikj.core/bootstrap!
-         :handler wikj.core/app}
+  :ring {:handler wikj.core/app}
 
   :profiles {:dev
              {:source-paths ["dev"]
