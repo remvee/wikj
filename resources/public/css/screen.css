@@ -2,13 +2,26 @@
   box-sizing: border-box;
 }
 
+html {
+  background: #eee;
+}
+
 body {
   max-width: 50em;
-  margin: 5em auto;
+  margin: 0 auto;
+  padding: 1em;
+  background: #fff;
+  border: solid #ddd 1px;
+  border-top: none;
+  position: relative;
+}
+
+h1 {
+  margin: 0 0 .5em 0;
 }
 
 div.content {
-  margin: 1em 0
+  margin: 1em 0;
 }
 
 div.meta:after {
@@ -19,7 +32,7 @@ div.meta:after {
   height: 0;
   line-height: 0;
 }
-  div.meta div.tstamp {
+  div.meta .tstamp {
     font-size: .5em;
     float: right;
   }
@@ -34,8 +47,17 @@ ol.versions {
     margin-right: .5em;
   }
 
-form.edit-page {}
-
+form.edit-page {
+  margin-top: 1em;
+}
+  form.edit-page:after {
+    content: ".";
+    display: block;
+    clear: right;
+    visibility: hidden;
+    height: 0;
+    line-height: 0;
+  }
   form.edit-page textarea {
     width: 100%;
     min-height: 20em;
@@ -43,5 +65,5 @@ form.edit-page {}
   form.edit-page button {
     padding: .5em 1em;
     float: right;
-    maring: 0;
+    margin: 1em 0 0 0;
   }

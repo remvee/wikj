@@ -46,6 +46,8 @@
   (layout
    (titlize path)
    [:div.content (wiki->html data)]
+   [:div.meta
+    [:div.tstamp (htmlize tstamp)]]
    [:form.edit-page {:method "post"}
     [:textarea {:name "data"} data]
     [:button {:type "submit"} "@"]]))
