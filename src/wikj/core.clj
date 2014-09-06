@@ -3,8 +3,9 @@
             [clojure.tools.logging :as log]
             [environ.core :refer [env]]
             [hiccup.page :refer [html5 include-css]]
+            [hiccup.util :refer [escape-html]]
             [ring.middleware.defaults :refer [wrap-defaults]]
-            [wikj.formatting :refer [htmlize url-decode wiki->html]])
+            [wikj.formatting :as f])
   (:import [java.io FileNotFoundException]
            [java.util Date]))
 
@@ -13,7 +14,7 @@
 ;; Views
 
 (defn titlize [path]
-  (str/capitalize (url-decode (subs path 1))))
+  (str/capitalize (f/url-decode (subs path 1))))
 
 (defn layout [title & body]
   (html5
@@ -27,30 +28,33 @@
 (defn render-show [path {:keys [data tstamp] :as page} versions]
   (layout
    (titlize path)
-   [:div.content (wiki->html data)]
-   [:div.meta
-    [:div.tstamp (htmlize tstamp)]]
-   [:div.actions
-    [:a {:href "?edit=1"} "@"]
-    [:ol.versions
-     (reverse (map (fn [p i]
-                     [:li
-                      [:a (conj
-                           {:title (htmlize (:tstamp p))}
-                           (if-not (= page p)
-                             {:href (str "?version=" i)}))
-                       i]])
-                   versions (iterate inc 0)))]]))
+   [:div.content (f/wiki->html data)]
+   [:footer
+    [:div.meta
+     [:div.tstamp (f/htmlize tstamp)]]
+    [:div.actions
+     [:a {:href "?edit=1#edit"} "@"]
+     [:ol.versions
+      (reverse (map (fn [p i]
+                      [:li
+                       [:a (conj
+                            {:title (f/htmlize (:tstamp p))}
+                            (if-not (= page p)
+                              {:href (str "?version=" i)}))
+                        i]])
+                    versions (iterate inc 0)))]]]))
 
 (defn render-edit [path {:keys [data tstamp]}]
   (layout
    (titlize path)
-   [:div.content (wiki->html data)]
-   [:div.meta
-    [:div.tstamp (htmlize tstamp)]]
-   [:form.edit-page {:method "post"}
-    [:textarea {:name "data"} data]
-    [:button {:type "submit"} "@"]]))
+   [:div.content (f/wiki->html data)]
+   [:div.edit {:id "edit"}
+    [:form.edit-page {:method "post"}
+     [:textarea {:name "data", :placeholder f/doc} data]
+     [:button {:type "submit"} "@"]]]
+   [:footer
+    [:div.meta
+     [:div.tstamp (f/htmlize tstamp)]]]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

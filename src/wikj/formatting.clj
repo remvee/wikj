@@ -5,6 +5,8 @@
   (:import [java.text SimpleDateFormat]
            [java.util Date]))
 
+(def doc "[[foo][Foo!]] / [[foo]]")
+
 (def ^:dynamic *encoding* "UTF-8")
 
 (defn url-encode [str]
@@ -20,7 +22,7 @@
                 (re-seq pattern data)))))
 
 (defn wiki->html-newlines
-  "Single new becomes a <br> and a double <p>"
+  "Single newlines becomes a <br> and a double <p>"
   [data]
   (-> data
       (replace #"\n\r?(?:\n\r?)+" (constantly "<p>"))

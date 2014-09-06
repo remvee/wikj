@@ -3,40 +3,63 @@
 }
 
 html {
-  background: #eee;
+  background: #444 url('/bg.jpg');
 }
 
 body {
+  position: relative;
   max-width: 50em;
-  margin: 0 auto;
-  padding: 1em;
-  background: #fff;
+  margin: 0 auto 5pt auto;
   border: solid #ddd 1px;
   border-top: none;
-  position: relative;
+  border-radius: 0 0 5pt 5pt;
+  background: #fff;
+  font-size: 12pt;
+  font-family: "Helvetica Neue", Arial, "Dejavu Sans", "Bitstream Vera Sans", Ubuntu, Helvetica, sans-serif;
+  line-height: 1.5;
+}
+textarea {
+  background: #f8f8f8;
+  font-size: 12pt;
+  font-family: "Helvetica Neue", Arial, "Dejavu Sans", "Bitstream Vera Sans", Ubuntu, Helvetica, sans-serif;
+  line-height: 1.5;
 }
 
 h1 {
-  margin: 0 0 .5em 0;
+  margin: 0;
+  padding: 10pt;
+  background: #eee;
+  border-bottom: solid #ddd 1pt;
+  font-family: "Times New Roman", sans-serif;
+  font-size: 32pt;
+  font-weight: bold;
 }
 
-div.content {
-  margin: 1em 0;
+a:link {
+  color: #222;
+  text-decoration: underline;
+}
+a:visited {
+  color: #555;
 }
 
-div.meta:after {
-  content: ".";
-  display: block;
-  clear: right;
-  visibility: hidden;
-  height: 0;
-  line-height: 0;
+div.content, div.edit {
+  margin: 10pt;
 }
-  div.meta .tstamp {
-    font-size: .5em;
-    float: right;
-  }
 
+div.meta {
+  font-size: x-small;
+  float: right;
+}
+
+footer {
+  padding: 5pt;
+  min-height: 20pt;
+  font-size: small;
+  background: #eee;
+  border-top: solid #ddd 1px;
+  border-radius: 0 0 5pt 5pt;
+}
 ol.versions {
   padding: 0;
   margin: 0 0 0 .5em;
