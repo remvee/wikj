@@ -96,7 +96,7 @@
   (let [{:keys [request-method uri params pages]} req]
     (case request-method
       :get (cond
-            (= "/" uri)    (found "/HomePage")
+            (= "/" uri)    (found (str "/" (f/url-encode (:site-title req))))
             (:edit params) (handle-edit pages uri)
             :else          (handle-show pages uri (:version params)))
       :post (handle-create pages uri (:data params)))))
@@ -130,6 +130,10 @@
             (backup! @pages))
           res)))))
 
+(defn wrap-site-title
+  [app title]
+  (fn [req] (app (assoc req :site-title title))))
+
 (def site-defaults
   {:params    {:keywordize true
                :urlencoded true}
@@ -140,6 +144,7 @@
 
 (def app
   (-> handler
+      (wrap-site-title (env :wikj-title "wikj"))
       (wrap-pages (env :wikj-backup-file))
       (wrap-defaults site-defaults)
       wrap-exception))
