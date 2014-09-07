@@ -15,7 +15,7 @@
     (let [{status :status {location "Location"} :headers}
           (handler (request :get "/"))]
       (is (= 302 status))
-      (is (= "/HomePage" location))))
+      (is (= "/wikj" location))))
 
   (testing "new page route"
     (let [{status :status {location "Location"} :headers}

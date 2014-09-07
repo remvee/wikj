@@ -1,9 +1,10 @@
 (ns wikj.core
+  (:gen-class)
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [environ.core :refer [env]]
             [hiccup.page :refer [html5 include-css]]
             [hiccup.util :refer [escape-html]]
+            [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.defaults :refer [wrap-defaults]]
             [wikj.formatting :as f])
   (:import [java.io FileNotFoundException]
@@ -93,10 +94,10 @@
                       (Date.) data)))
 
 (defn handler [req]
-  (let [{:keys [request-method uri params pages]} req]
+  (let [{:keys [request-method uri params pages site-title]} req]
     (case request-method
       :get (cond
-            (= "/" uri)    (found (str "/" (f/url-encode (:site-title req))))
+            (= "/" uri)    (found (str "/" (or site-title "wikj")))
             (:edit params) (handle-edit pages uri)
             :else          (handle-show pages uri (:version params)))
       :post (handle-create pages uri (:data params)))))
@@ -142,9 +143,17 @@
                :not-modified-responses true}
    :static    {:resources "public"}})
 
-(def app
+(defn make-handler [site-title & [backup-file]]
   (-> handler
-      (wrap-site-title (env :wikj-title "wikj"))
-      (wrap-pages (env :wikj-backup-file))
+      (wrap-site-title site-title)
+      (wrap-pages backup-file)
       (wrap-defaults site-defaults)
       wrap-exception))
+
+(defn -main [site-title
+             & {store-file "--store-file"
+                host "--host"
+                port "--port"}]
+  (let [app (make-handler site-title store-file)]
+    (run-jetty app {:host (or host "localhost")
+                    :port (if port (Long/parseLong port) 8080)})))

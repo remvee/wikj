@@ -10,9 +10,10 @@
     (throw (Exception. "already started")))
 
   (reset! server-instance
-          (run-jetty #'wikj/app {:host (or host "localhost")
-                                 :port (or port 8080)
-                                 :join? false})))
+          (run-jetty (wikj/make-handler "dev")
+                     {:host (or host "localhost")
+                      :port (or port 8080)
+                      :join? false})))
 
 (defn stop-server []
   (when @server-instance
